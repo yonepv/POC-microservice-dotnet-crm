@@ -19,6 +19,7 @@ namespace D365WebAPIWithMSAL
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("An error occurred! :( ex: "+ex);
                 Console.WriteLine(ex.Message);
                 Console.ResetColor();
             }
@@ -33,6 +34,7 @@ namespace D365WebAPIWithMSAL
 
             // You can run this sample using ClientSecret or Certificate. The code will differ only when instantiating the IConfidentialClientApplication
             bool isUsingClientSecret = AppUsesClientSecret(config);
+            Console.WriteLine("isUsingClientSecret: "+isUsingClientSecret); 
 
             // Even if this is a console application here, a daemon application is a confidential client application
             IConfidentialClientApplication app;
@@ -43,6 +45,7 @@ namespace D365WebAPIWithMSAL
                     .WithClientSecret(config.ClientSecret)
                     .WithAuthority(new Uri(config.Authority))
                     .Build();
+                Console.WriteLine("app: "+app+", authority: "+app.Authority); 
             }
 
             else
@@ -57,15 +60,17 @@ namespace D365WebAPIWithMSAL
             // With client credentials flows the scopes is ALWAYS of the shape "resource/.default", as the 
             // application permissions need to be set statically (in the portal or by PowerShell), and then granted by
             // a tenant administrator
-            string[] scopes = new string[] { "https://{CRM_URL}.crm.dynamics.com/.default" };
+            //string[] scopes = new string[] { "https://{CRM_URL}.crm.dynamics.com/.default" };
+            string[] scopes = new string[] { "https://curateurdevfr.crm3.dynamics.com/.default" };
 
             AuthenticationResult result = null;
             try
             {
                 result = await app.AcquireTokenForClient(scopes)
                     .ExecuteAsync();
+                    
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Token acquired");
+                Console.WriteLine("Token acquired, result: "+result+", result.AccessToken: ["+result.AccessToken+"], toString: "+result.ToString());
                 Console.ResetColor();
             }
             catch (MsalServiceException ex) when (ex.Message.Contains("AADSTS70011"))
@@ -79,9 +84,10 @@ namespace D365WebAPIWithMSAL
 
             if (result != null)
             {
+                Console.WriteLine("result is not null!, will try to call the web api and process the result asynch..");
                 var httpClient = new HttpClient();
                 var apiCaller = new ProtectedApiCallHelper(httpClient);
-                await apiCaller.CallWebApiAndProcessResultASync("https://{CRM_URL}.crm.dynamics.com/api/data/v9.1/", result.AccessToken, Display);
+                await apiCaller.CallWebApiAndProcessResultASync("https://curateurdevfr.crm3.dynamics.com/api/data/v9.2/", result.AccessToken, Display);
             }
         }
 
@@ -105,7 +111,7 @@ namespace D365WebAPIWithMSAL
         /// <returns></returns>
         private static bool AppUsesClientSecret(AuthenticationConfig config)
         {
-            string clientSecretPlaceholderValue = "[Enter here a client secret for your application]";
+            string clientSecretPlaceholderValue = "";
             string certificatePlaceholderValue = "[Or instead of client secret: Enter here the name of a certificate (from the user cert store) as registered with your application]";
 
             if (!String.IsNullOrWhiteSpace(config.ClientSecret) && config.ClientSecret != clientSecretPlaceholderValue)

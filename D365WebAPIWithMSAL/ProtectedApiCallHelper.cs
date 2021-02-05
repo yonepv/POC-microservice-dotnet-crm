@@ -73,7 +73,9 @@ namespace D365WebAPIWithMSAL
 
                 defaultRequetHeaders.Authorization = new AuthenticationHeaderValue("bearer", accessToken);
 
+                Console.WriteLine("about to call httpClient.getAsync with webApiUrl: ["+webApiUrl+"]");
                 HttpResponseMessage response = await HttpClient.GetAsync(webApiUrl + "WhoAmI");
+                //HttpResponseMessage response = await HttpClient.GetAsync(webApiUrl + "contacts");
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
